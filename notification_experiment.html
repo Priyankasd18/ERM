@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Notification Frequency Experiment</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    background: #faf8f3;
+    color: #1a1a1a;
+    line-height: 1.6;
+  }
+  h1 { font-weight: normal; font-size: 28px; margin-bottom: 8px; letter-spacing: -0.5px; }
+  h2 { font-weight: normal; font-size: 20px; margin-top: 32px; color: #555; }
+  .muted { color: #777; font-size: 14px; }
+  .card { background: white; padding: 32px; border: 1px solid #e5e1d6; border-radius: 4px; margin-top: 24px; }
+  label { display: block; margin: 16px 0 6px; font-size: 14px; color: #444; }
+  input[type=text], input[type=number], select {
+    font-family: inherit; font-size: 16px; padding: 10px 12px;
+    border: 1px solid #c8c4b8; border-radius: 3px; width: 100%; background: #fdfdfa;
+  }
+  button {
+    font-family: inherit; font-size: 16px; padding: 12px 24px;
+    background: #1a1a1a; color: white; border: none; border-radius: 3px;
+    cursor: pointer; margin-top: 24px; letter-spacing: 0.3px;
+  }
+  button:hover { background: #333; }
+  button.secondary { background: white; color: #1a1a1a; border: 1px solid #1a1a1a; }
+
+  .task-label {
+    text-align: center; font-size: 12px; color: #999; text-transform: uppercase;
+    letter-spacing: 2px; margin-top: 32px;
+  }
+  .question-text {
+    font-size: 26px; text-align: center; margin: 16px 0 32px;
+    line-height: 1.4; color: #1a1a1a;
+  }
+
+  /* MCQ options */
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 600px; margin: 0 auto; }
+  .option-btn {
+    background: white; border: 2px solid #c8c4b8; border-radius: 4px;
+    padding: 18px 16px; font-family: inherit; font-size: 16px;
+    text-align: left; cursor: pointer; color: #1a1a1a;
+    transition: all 0.1s; margin: 0; line-height: 1.3;
+  }
+  .option-btn:hover { background: #f0ebe0; border-color: #1a1a1a; }
+  .option-btn .key {
+    display: inline-block; background: #f0ebe0; width: 28px; height: 28px;
+    line-height: 28px; text-align: center; border-radius: 3px;
+    margin-right: 12px; font-weight: bold;
+    font-family: 'Courier New', monospace; font-size: 14px;
+  }
+
+  /* Drag-and-drop sort */
+  .sort-container { display: flex; flex-direction: column; gap: 10px; max-width: 480px; margin: 0 auto 16px; }
+  .sort-item {
+    background: white; border: 2px solid #c8c4b8; border-radius: 4px;
+    padding: 18px 20px; font-size: 18px; cursor: grab;
+    user-select: none; display: flex; align-items: center; gap: 16px;
+    transition: background 0.1s, border-color 0.1s, opacity 0.1s;
+  }
+  .sort-item::before {
+    content: "⋮⋮"; color: #c8c4b8; font-size: 18px;
+    letter-spacing: -3px; flex-shrink: 0;
+  }
+  .sort-item:hover { border-color: #888; }
+  .sort-item.dragging { opacity: 0.4; cursor: grabbing; }
+  .sort-item.drag-over { background: #f0ebe0; border-color: #1a1a1a; }
+  .sort-submit-wrap { text-align: center; }
+
+  .timer {
+    position: fixed; top: 16px; right: 24px;
+    font-family: 'Courier New', monospace; font-size: 14px; color: #888;
+    background: white; padding: 6px 12px;
+    border: 1px solid #e5e1d6; border-radius: 3px; z-index: 999;
+  }
+  .progress { text-align: center; color: #888; font-size: 13px; margin-top: 24px; }
+
+  /* LARGER NOTIFICATION BANNER */
+  .notif {
+    position: fixed; top: 20px; left: 50%;
+    transform: translate(-50%, -200%);
+    min-width: 480px; max-width: 640px;
+    color: white; padding: 22px 28px;
+    font-family: -apple-system, system-ui, sans-serif;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.18);
+    transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+    z-index: 1000; display: flex; align-items: center; gap: 18px;
+  }
+  .notif.show { transform: translate(-50%, 0); }
+  .notif-icon {
+    flex-shrink: 0; width: 56px; height: 56px;
+    border-radius: 12px; background: rgba(255,255,255,0.22);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+  .notif-content { flex: 1; min-width: 0; }
+  .notif-title { font-weight: 700; font-size: 17px; margin-bottom: 4px; letter-spacing: 0.2px; }
+  .notif-body { font-size: 18px; line-height: 1.3; opacity: 0.97; }
+
+  .likert { display: flex; gap: 8px; justify-content: center; margin: 32px 0; }
+  .likert-btn {
+    flex: 1; max-width: 80px; padding: 20px 8px;
+    background: white; border: 1px solid #c8c4b8; border-radius: 3px;
+    cursor: pointer; font-family: inherit; font-size: 18px;
+    transition: all 0.15s; margin: 0; color: #1a1a1a;
+  }
+  .likert-btn:hover { background: #f0ebe0; }
+  .likert-btn.selected { background: #1a1a1a; color: white; }
+  .likert-labels { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px; padding: 0 4px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e5e1d6; }
+  th { background: #f0ebe0; font-weight: normal; }
+  textarea { width: 100%; height: 200px; font-family: 'Courier New', monospace; font-size: 12px; padding: 12px; border: 1px solid #c8c4b8; }
+  .small { font-size: 13px; color: #666; }
+
+  /* ============ MOBILE LAYOUT ============ */
+  @media (max-width: 600px) {
+    body { padding: 20px 14px 60px; font-size: 15px; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 17px; margin-top: 24px; }
+    .card { padding: 20px; margin-top: 16px; }
+    input[type=text], input[type=number], select { font-size: 16px; padding: 12px; }
+    button { padding: 14px 20px; font-size: 16px; width: 100%; }
+    .task-label { margin-top: 20px; font-size: 11px; letter-spacing: 1.5px; }
+    .question-text { font-size: 20px; margin: 12px 0 20px; padding: 0 8px; }
+    .options { grid-template-columns: 1fr; gap: 10px; max-width: none; }
+    .option-btn { padding: 16px 14px; font-size: 15px; width: 100%; margin-top: 0; }
+    .option-btn .key { width: 24px; height: 24px; line-height: 24px; font-size: 13px; margin-right: 10px; }
+    /* Notification banner — mobile-friendly */
+    .notif {
+      min-width: 0;
+      max-width: none;
+      width: calc(100vw - 20px);
+      left: 10px;
+      top: 10px;
+      transform: translate(0, -200%);
+      padding: 14px 16px;
+      gap: 12px;
+      border-radius: 14px;
+    }
+    .notif.show { transform: translate(0, 0); }
+    .notif-icon { width: 44px; height: 44px; font-size: 24px; border-radius: 10px; }
+    .notif-title { font-size: 14px; margin-bottom: 2px; }
+    .notif-body { font-size: 15px; }
+    .timer { top: 8px; right: 10px; font-size: 12px; padding: 4px 8px; }
+    .likert { gap: 6px; }
+    .likert-btn { padding: 14px 4px; font-size: 16px; max-width: none; }
+    .likert-labels { font-size: 11px; }
+    table { font-size: 12px; }
+    th, td { padding: 6px 8px; }
+    textarea { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="timer" id="timer" style="display:none;">--:--</div>
+<div class="notif" id="notif" style="background:#2a5d8f;">
+  <div class="notif-icon" id="notifIcon">📱</div>
+  <div class="notif-content">
+    <div class="notif-title" id="notifTitle">Message</div>
+    <div class="notif-body" id="notifBody">New notification</div>
+  </div>
+</div>
+<div id="app"></div>
+
+<script>
+// ============ GENERAL KNOWLEDGE BANK ============
+const GK = [
+  { q:"What is the capital of France?", opts:["Paris","Lyon","Marseille","Nice"], correctIdx:0 },
+  { q:"What is the capital of Australia?", opts:["Sydney","Melbourne","Canberra","Perth"], correctIdx:2 },
+  { q:"What is the capital of Japan?", opts:["Osaka","Tokyo","Kyoto","Yokohama"], correctIdx:1 },
+  { q:"What is the capital of Canada?", opts:["Toronto","Ottawa","Montreal","Vancouver"], correctIdx:1 },
+  { q:"What is the capital of Brazil?", opts:["Rio de Janeiro","São Paulo","Brasília","Salvador"], correctIdx:2 },
+  { q:"What is the capital of Egypt?", opts:["Alexandria","Giza","Cairo","Luxor"], correctIdx:2 },
+  { q:"What is the capital of South Korea?", opts:["Busan","Seoul","Incheon","Daegu"], correctIdx:1 },
+  { q:"What is the capital of Argentina?", opts:["Buenos Aires","Córdoba","Rosario","Mendoza"], correctIdx:0 },
+  { q:"What is the capital of Turkey?", opts:["Istanbul","Ankara","Izmir","Bursa"], correctIdx:1 },
+  { q:"What is the capital of Spain?", opts:["Barcelona","Madrid","Valencia","Seville"], correctIdx:1 },
+  { q:"What is the capital of Germany?", opts:["Munich","Frankfurt","Berlin","Hamburg"], correctIdx:2 },
+  { q:"What is the capital of Italy?", opts:["Milan","Rome","Florence","Naples"], correctIdx:1 },
+  { q:"What is the capital of Russia?", opts:["St. Petersburg","Kazan","Moscow","Novosibirsk"], correctIdx:2 },
+  { q:"What is the capital of Greece?", opts:["Thessaloniki","Athens","Patras","Sparta"], correctIdx:1 },
+  { q:"What is the capital of Portugal?", opts:["Porto","Faro","Coimbra","Lisbon"], correctIdx:3 },
+  { q:"What is the chemical symbol for gold?", opts:["Au","Ag","Gd","Go"], correctIdx:0 },
+  { q:"What is the chemical symbol for silver?", opts:["Si","Sr","Ag","Sv"], correctIdx:2 },
+  { q:"How many planets are in our solar system?", opts:["7","8","9","10"], correctIdx:1 },
+  { q:"Which planet is closest to the sun?", opts:["Venus","Earth","Mercury","Mars"], correctIdx:2 },
+  { q:"Which is the largest planet in our solar system?", opts:["Saturn","Jupiter","Neptune","Uranus"], correctIdx:1 },
+  { q:"What is the hardest natural substance?", opts:["Quartz","Diamond","Granite","Iron"], correctIdx:1 },
+  { q:"How many bones are in the adult human body?", opts:["196","206","216","226"], correctIdx:1 },
+  { q:"What does DNA stand for?", opts:["Deoxyribonucleic Acid","Diribonucleic Acid","Deoxynitric Acid","Decanucleic Acid"], correctIdx:0 },
+  { q:"What gas do plants absorb during photosynthesis?", opts:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"], correctIdx:2 },
+  { q:"What is the chemical formula of water?", opts:["H2O","HO2","H3O","OH2"], correctIdx:0 },
+  { q:"Which organ pumps blood through the body?", opts:["Liver","Heart","Lung","Brain"], correctIdx:1 },
+  { q:"What is the largest organ in the human body?", opts:["Heart","Liver","Skin","Brain"], correctIdx:2 },
+  { q:"How many chambers does a human heart have?", opts:["2","3","4","5"], correctIdx:2 },
+  { q:"Water boils at what temperature (°C, sea level)?", opts:["90","100","110","120"], correctIdx:1 },
+  { q:"Water freezes at what temperature in Celsius?", opts:["0","10","-10","32"], correctIdx:0 },
+  { q:"Which gas makes up most of Earth's atmosphere?", opts:["Oxygen","Nitrogen","Hydrogen","Argon"], correctIdx:1 },
+  { q:"What is the smallest planet in our solar system?", opts:["Mercury","Mars","Earth","Venus"], correctIdx:0 },
+  { q:"Which planet is known as the Red Planet?", opts:["Venus","Jupiter","Mars","Saturn"], correctIdx:2 },
+  { q:"What is the approximate speed of light?", opts:["300,000 km/s","30,000 km/s","3,000 km/s","3,000,000 km/s"], correctIdx:0 },
+  { q:"What type of star is the Sun?", opts:["Black Hole","Red Giant","Yellow Dwarf","White Dwarf"], correctIdx:2 },
+  { q:"In what year did WWII end?", opts:["1944","1945","1946","1947"], correctIdx:1 },
+  { q:"Who was the first person to walk on the moon?", opts:["Buzz Aldrin","Neil Armstrong","Yuri Gagarin","John Glenn"], correctIdx:1 },
+  { q:"In what year did the Berlin Wall fall?", opts:["1987","1988","1989","1990"], correctIdx:2 },
+  { q:"Who painted the Mona Lisa?", opts:["Michelangelo","Raphael","Leonardo da Vinci","Donatello"], correctIdx:2 },
+  { q:"Which ancient civilization built the pyramids of Giza?", opts:["Romans","Greeks","Egyptians","Mayans"], correctIdx:2 },
+  { q:"In what year did the Titanic sink?", opts:["1910","1912","1914","1916"], correctIdx:1 },
+  { q:"In which country did the Renaissance begin?", opts:["France","Italy","Germany","England"], correctIdx:1 },
+  { q:"Who wrote Romeo and Juliet?", opts:["Dickens","Chaucer","Shakespeare","Wilde"], correctIdx:2 },
+  { q:"In what year did humans first land on the moon?", opts:["1967","1969","1971","1973"], correctIdx:1 },
+  { q:"Who was the first president of the United States?", opts:["Lincoln","Jefferson","Washington","Adams"], correctIdx:2 },
+  { q:"In what year did WWI begin?", opts:["1912","1914","1916","1918"], correctIdx:1 },
+  { q:"Which empire built the Colosseum?", opts:["Greek","Roman","Ottoman","Byzantine"], correctIdx:1 },
+  { q:"Who discovered penicillin?", opts:["Marie Curie","Alexander Fleming","Louis Pasteur","Charles Darwin"], correctIdx:1 },
+  { q:"Which is the largest ocean?", opts:["Atlantic","Pacific","Indian","Arctic"], correctIdx:1 },
+  { q:"Which continent has the most countries?", opts:["Asia","Africa","Europe","South America"], correctIdx:1 },
+  { q:"Which is the longest river in Africa?", opts:["Congo","Niger","Nile","Zambezi"], correctIdx:2 },
+  { q:"Which country is shaped like a boot?", opts:["Spain","Greece","Italy","Portugal"], correctIdx:2 },
+  { q:"Which is the largest hot desert in the world?", opts:["Sahara","Gobi","Kalahari","Arabian"], correctIdx:0 },
+  { q:"Which mountain range separates Europe and Asia?", opts:["Alps","Andes","Urals","Himalayas"], correctIdx:2 },
+  { q:"Which country is famous for tulips?", opts:["Belgium","Netherlands","France","Denmark"], correctIdx:1 },
+  { q:"Which river runs through Paris?", opts:["Rhine","Seine","Thames","Danube"], correctIdx:1 },
+  { q:"The Eiffel Tower is in which city?", opts:["Lyon","Marseille","Paris","Bordeaux"], correctIdx:2 },
+  { q:"The Statue of Liberty was a gift from which country?", opts:["Britain","France","Spain","Italy"], correctIdx:1 },
+  { q:"Which is the largest country by area?", opts:["China","USA","Canada","Russia"], correctIdx:3 },
+  { q:"Which is the smallest country in the world?", opts:["Monaco","Vatican City","Liechtenstein","San Marino"], correctIdx:1 },
+  { q:"Mount Everest is in which mountain range?", opts:["Andes","Alps","Himalayas","Rockies"], correctIdx:2 },
+  { q:"Which continent is the Sahara Desert in?", opts:["Asia","Africa","Australia","South America"], correctIdx:1 },
+  { q:"How many continents are there?", opts:["5","6","7","8"], correctIdx:2 },
+  { q:"Which country has the Great Wall?", opts:["Japan","China","Korea","Mongolia"], correctIdx:1 },
+  { q:"Andorra lies between Spain and which country?", opts:["Portugal","France","Italy","Switzerland"], correctIdx:1 },
+  { q:"Synonym for 'happy'?", opts:["Sad","Joyful","Angry","Tired"], correctIdx:1 },
+  { q:"Opposite of 'begin'?", opts:["Start","Continue","End","Pause"], correctIdx:2 },
+  { q:"How many letters in the English alphabet?", opts:["24","25","26","27"], correctIdx:2 },
+  { q:"Which word means 'very large'?", opts:["Tiny","Enormous","Average","Small"], correctIdx:1 },
+  { q:"Plural of 'child'?", opts:["Childs","Children","Childes","Childer"], correctIdx:1 },
+  { q:"Synonym for 'fast'?", opts:["Slow","Quick","Heavy","Soft"], correctIdx:1 },
+  { q:"Opposite of 'expensive'?", opts:["Costly","Pricey","Cheap","Valuable"], correctIdx:2 },
+  { q:"Past tense of 'go'?", opts:["Goed","Went","Gone","Going"], correctIdx:1 },
+  { q:"What is a baby cat called?", opts:["Cub","Puppy","Kitten","Calf"], correctIdx:2 },
+  { q:"What is the fear of heights called?", opts:["Claustrophobia","Acrophobia","Hydrophobia","Arachnophobia"], correctIdx:1 },
+  { q:"How many vowels in the English alphabet?", opts:["4","5","6","7"], correctIdx:1 },
+  { q:"Synonym for 'smart'?", opts:["Foolish","Intelligent","Lazy","Sad"], correctIdx:1 },
+  { q:"Opposite of 'tall'?", opts:["Short","Wide","Long","Big"], correctIdx:0 },
+  { q:"What do we call a group of fish?", opts:["Herd","School","Pack","Flock"], correctIdx:1 },
+  { q:"Past tense of 'swim'?", opts:["Swimmed","Swam","Swum","Swimming"], correctIdx:1 },
+  { q:"How many sides does a hexagon have?", opts:["5","6","7","8"], correctIdx:1 },
+  { q:"What is the tallest land mammal?", opts:["Elephant","Giraffe","Camel","Horse"], correctIdx:1 },
+  { q:"Currency of Japan?", opts:["Won","Yen","Yuan","Rupee"], correctIdx:1 },
+  { q:"Currency of the UK?", opts:["Euro","Pound","Dollar","Franc"], correctIdx:1 },
+  { q:"How many minutes in an hour?", opts:["30","45","60","90"], correctIdx:2 },
+  { q:"How many days in a leap year?", opts:["364","365","366","367"], correctIdx:2 },
+  { q:"How many strings on a standard guitar?", opts:["4","5","6","7"], correctIdx:2 },
+  { q:"What color is an emerald?", opts:["Red","Blue","Green","Yellow"], correctIdx:2 },
+  { q:"Which sport is played at Wimbledon?", opts:["Football","Tennis","Golf","Cricket"], correctIdx:1 },
+  { q:"How many players on a soccer team on the field?", opts:["9","10","11","12"], correctIdx:2 },
+  { q:"How many sides does a pentagon have?", opts:["4","5","6","7"], correctIdx:1 },
+  { q:"Which animal is the 'king of the jungle'?", opts:["Tiger","Lion","Elephant","Bear"], correctIdx:1 },
+  { q:"How many seconds in a minute?", opts:["30","45","60","90"], correctIdx:2 },
+  { q:"How many months in a year?", opts:["10","11","12","13"], correctIdx:2 },
+  { q:"Which country is the home of pasta and pizza?", opts:["France","Italy","Greece","Spain"], correctIdx:1 },
+  { q:"Main ingredient in guacamole?", opts:["Tomato","Avocado","Lemon","Onion"], correctIdx:1 },
+  { q:"Which country is coffee originally from?", opts:["Ethiopia","Brazil","Colombia","India"], correctIdx:0 },
+  { q:"Chocolate is made from beans of which plant?", opts:["Sugar","Cocoa","Coffee","Corn"], correctIdx:1 },
+  { q:"In which country did sushi originate?", opts:["China","Japan","Korea","Thailand"], correctIdx:1 },
+  { q:"Which country is tea originally from?", opts:["India","China","Japan","Sri Lanka"], correctIdx:1 },
+  { q:"Which fruit 'keeps the doctor away'?", opts:["Apple","Orange","Banana","Grape"], correctIdx:0 },
+  { q:"Yellow tropical fruit grown on a tree-like plant?", opts:["Apple","Banana","Grape","Plum"], correctIdx:1 },
+  { q:"How many wheels does a tricycle have?", opts:["2","3","4","5"], correctIdx:1 },
+  { q:"Which planet has prominent rings?", opts:["Mars","Saturn","Venus","Mercury"], correctIdx:1 },
+];
+
+// ============ PUZZLE BANK ============
+const PUZZLES = [
+  { q:"What number comes next: 2, 4, 6, 8, ?", opts:["9","10","11","12"], correctIdx:1 },
+  { q:"What number comes next: 5, 10, 15, 20, ?", opts:["22","23","24","25"], correctIdx:3 },
+  { q:"What number comes next: 1, 4, 9, 16, ?", opts:["20","23","25","27"], correctIdx:2 },
+  { q:"What number comes next: 2, 4, 8, 16, ?", opts:["20","24","30","32"], correctIdx:3 },
+  { q:"What number comes next: 3, 6, 12, 24, ?", opts:["36","42","48","60"], correctIdx:2 },
+  { q:"What number comes next: 1, 1, 2, 3, 5, ?", opts:["6","7","8","10"], correctIdx:2 },
+  { q:"What number comes next: 10, 20, 40, 80, ?", opts:["100","120","140","160"], correctIdx:3 },
+  { q:"What number comes next: 100, 81, 64, 49, ?", opts:["32","36","42","45"], correctIdx:1 },
+  { q:"What number comes next: 1, 8, 27, 64, ?", opts:["100","125","128","216"], correctIdx:1 },
+  { q:"What number comes next: 3, 9, 27, 81, ?", opts:["162","216","243","324"], correctIdx:2 },
+  { q:"What number comes next: 11, 22, 33, 44, ?", opts:["48","50","55","66"], correctIdx:2 },
+  { q:"Which number is the odd one out: 4, 9, 16, 22?", opts:["4","9","16","22"], correctIdx:3 },
+  { q:"Which number is the odd one out: 10, 20, 30, 35?", opts:["10","20","30","35"], correctIdx:3 },
+  { q:"Which number is the odd one out: 4, 6, 8, 11?", opts:["4","6","8","11"], correctIdx:3 },
+  { q:"Which letter comes next: A, C, E, G, ?", opts:["H","I","J","K"], correctIdx:1 },
+  { q:"Which letter comes next: B, D, F, H, ?", opts:["I","J","K","L"], correctIdx:1 },
+  { q:"If X = 5 and Y = X + 3, what is Y?", opts:["6","7","8","9"], correctIdx:2 },
+  { q:"If A = 7 and B = A × 2, what is B?", opts:["12","13","14","15"], correctIdx:2 },
+  { q:"If X + 5 = 12, what is X?", opts:["5","6","7","8"], correctIdx:2 },
+  { q:"What is half of 50?", opts:["20","25","30","35"], correctIdx:1 },
+  { q:"What is a quarter of 100?", opts:["10","20","25","50"], correctIdx:2 },
+  { q:"How many days in 3 weeks?", opts:["18","21","24","28"], correctIdx:1 },
+  { q:"How many hours in 2 days?", opts:["36","42","48","52"], correctIdx:2 },
+  { q:"Which number is double 17?", opts:["32","33","34","35"], correctIdx:2 },
+  { q:"What is 10% of 200?", opts:["10","15","20","25"], correctIdx:2 },
+  { q:"What is 25% of 80?", opts:["15","20","25","30"], correctIdx:1 },
+  { q:"A train travels 60 km/h for 2 hours. How far does it go?", opts:["100 km","110 km","120 km","130 km"], correctIdx:2 },
+  { q:"Which fraction is the largest?", opts:["1/2","1/3","1/4","1/5"], correctIdx:0 },
+  { q:"What is the square root of 144?", opts:["10","11","12","13"], correctIdx:2 },
+  { q:"What is the cube root of 27?", opts:["2","3","4","5"], correctIdx:1 },
+];
+
+// ============ NOTIFICATION POOL (with sound type per app) ============
+// Sound types: message, social, alert, positive, bell, jingle
+const NOTIFICATIONS = [
+  { bg:"#25D366", icon:"💬", title:"Sarah",            body:"omg you won't BELIEVE what just happened 👀", sound:"message" },
+  { bg:"#E1306C", icon:"📷", title:"Instagram",        body:"@yourcrush started following you 💕",         sound:"social" },
+  { bg:"#000000", icon:"🎵", title:"TikTok",           body:"Someone tagged you in a video — 200k views",  sound:"social" },
+  { bg:"#000000", icon:"👻", title:"Snapchat",         body:"🔥 Streak with Alex expires in 1 hour",       sound:"social" },
+  { bg:"#000000", icon:"𝕏",  title:"X (Twitter)",      body:"Your post is going viral — 12k likes 🚀",     sound:"social" },
+  { bg:"#E50914", icon:"▶️", title:"Netflix",          body:"New season just dropped. Watch now.",          sound:"jingle" },
+  { bg:"#1DB954", icon:"🎧", title:"Spotify",          body:"Your weekly mix is ready 🎵",                  sound:"positive" },
+  { bg:"#06C167", icon:"🍕", title:"Uber Eats",        body:"50% OFF your favorite spot — 10 min only!",    sound:"jingle" },
+  { bg:"#FD5068", icon:"🔥", title:"Tinder",           body:"You got a SUPER LIKE ⭐",                       sound:"positive" },
+  { bg:"#003366", icon:"🏦", title:"Bank Alert",       body:"⚠️ Suspicious activity on your account",        sound:"alert" },
+  { bg:"#FF9900", icon:"📦", title:"Amazon",           body:"Lightning deal: 70% off — ends in 5 min!",     sound:"positive" },
+  { bg:"#5865F2", icon:"🎮", title:"Discord",          body:"@everyone PARTY TONIGHT 🎉🎉",                  sound:"jingle" },
+  { bg:"#EA4335", icon:"✉️", title:"Gmail",            body:"URGENT — action required today",               sound:"bell" },
+  { bg:"#4285F4", icon:"📅", title:"Calendar",         body:"Meeting in 5 minutes — are you ready??",       sound:"bell" },
+  { bg:"#FF4500", icon:"👽", title:"Reddit",           body:"r/funny: you won't believe this (45k upvotes)", sound:"social" },
+  { bg:"#FF0000", icon:"▶️", title:"YouTube",          body:"New upload: 'I gave away $1,000,000'",         sound:"positive" },
+  { bg:"#9146FF", icon:"🎮", title:"Twitch",           body:"Your favorite streamer is LIVE 🔴",             sound:"positive" },
+  { bg:"#000000", icon:"📸", title:"BeReal",           body:"⚠️ Time to BeReal — 2 min late.",               sound:"alert" },
+  { bg:"#1877F2", icon:"👍", title:"Facebook",         body:"🎂 It's Tom's birthday today!",                 sound:"jingle" },
+  { bg:"#0A66C2", icon:"💼", title:"LinkedIn",         body:"Your profile appeared in 12 searches",         sound:"bell" },
+  { bg:"#CC0000", icon:"📰", title:"BREAKING NEWS",    body:"🚨 Major story developing right now",          sound:"alert" },
+  { bg:"#0EA5E9", icon:"⛈️", title:"Weather",          body:"Severe storm warning in your area",            sound:"alert" },
+  { bg:"#003087", icon:"💸", title:"PayPal",           body:"You received $200 from Mom",                   sound:"positive" },
+  { bg:"#FF3008", icon:"🛵", title:"DoorDash",         body:"Your driver is 2 minutes away!",               sound:"jingle" },
+  { bg:"#1d1d1f", icon:"🔐", title:"Apple ID",         body:"Login attempt from Moscow detected",           sound:"alert" },
+  { bg:"#1B2838", icon:"🎮", title:"Steam",            body:"STEAM SALE: 90% off your wishlist",            sound:"jingle" },
+  { bg:"#58CC02", icon:"🦉", title:"Duolingo",         body:"You missed your streak. I'm watching you...",  sound:"jingle" },
+  { bg:"#007AFF", icon:"📡", title:"AirDrop",          body:"'iPhone (5)' wants to share a photo",          sound:"bell" },
+  { bg:"#E60023", icon:"📌", title:"Pinterest",        body:"You have 7 new pins ❤️",                       sound:"social" },
+  { bg:"#34C759", icon:"💬", title:"Mom",              body:"Call me when you get a chance ❤️",             sound:"message" },
+  { bg:"#4A154B", icon:"💬", title:"Slack — #general", body:"@channel: anyone around for a quick question?", sound:"message" },
+  { bg:"#34C759", icon:"📍", title:"Find My",          body:"AirPods detected — Living Room",               sound:"bell" },
+];
+
+// ============ STATE ============
+const state = {
+  participantId: '',
+  age: '', gender: '',
+  order: [], orderName: '',
+  currentBlock: 0,
+  blockData: [],
+  blockTimer: null, notifTimer: null,
+  currentTask: null,
+  gkPool: [], puzzlePool: [],
+  blockStart: 0,
+  answers: [],
+  BLOCK_DURATION: 180,
+  acceptingAnswer: false,
+  // sort task state
+  currentSortOrder: [],
+};
+
+const ORDERS = {
+  '1: 0-5-10':[0,5,10],'2: 0-10-5':[0,10,5],'3: 5-0-10':[5,0,10],
+  '4: 5-10-0':[5,10,0],'5: 10-0-5':[10,0,5],'6: 10-5-0':[10,5,0],
+};
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============ AUDIO — DISTINCT SOUNDS PER APP ============
+let audioCtx;
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // iOS Safari: AudioContext starts suspended; resume on user gesture
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playSeq(notes) {
+  ensureAudio();
+  notes.forEach(n => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.frequency.value = n.freq;
+    osc.type = n.type || 'sine';
+    const t0 = audioCtx.currentTime + n.delay;
+    const peak = n.gain || 0.18;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + n.dur);
+    osc.start(t0);
+    osc.stop(t0 + n.dur + 0.05);
+  });
+}
+
+function playSound(type) {
+  switch(type) {
+    case 'message': // friendly two-tone (iPhone-like)
+      playSeq([
+        {freq:880, dur:0.13, delay:0},
+        {freq:1320, dur:0.20, delay:0.09}
+      ]); break;
+    case 'social': // short percussive pop (Instagram-like)
+      playSeq([
+        {freq:1500, dur:0.08, delay:0, gain:0.22},
+        {freq:1900, dur:0.06, delay:0.05, gain:0.18}
+      ]); break;
+    case 'alert': // urgent low buzz (bank/security-like)
+      playSeq([
+        {freq:440, dur:0.18, delay:0, type:'square', gain:0.13},
+        {freq:440, dur:0.18, delay:0.22, type:'square', gain:0.13},
+        {freq:440, dur:0.18, delay:0.44, type:'square', gain:0.13}
+      ]); break;
+    case 'positive': // ascending arpeggio (Tinder match / payment)
+      playSeq([
+        {freq:523, dur:0.10, delay:0},
+        {freq:659, dur:0.10, delay:0.09},
+        {freq:784, dur:0.22, delay:0.18}
+      ]); break;
+    case 'bell': // bell-like resonant tone (Calendar/Gmail)
+      playSeq([
+        {freq:1047, dur:0.40, delay:0, type:'triangle', gain:0.18},
+        {freq:1568, dur:0.30, delay:0.05, type:'triangle', gain:0.13}
+      ]); break;
+    case 'jingle': // playful melody (Netflix/Discord/Duolingo)
+      playSeq([
+        {freq:659, dur:0.10, delay:0},
+        {freq:784, dur:0.10, delay:0.10},
+        {freq:659, dur:0.08, delay:0.20},
+        {freq:988, dur:0.22, delay:0.30}
+      ]); break;
+    default:
+      playSound('message');
+  }
+}
+
+function showNotif() {
+  const n = NOTIFICATIONS[Math.floor(Math.random()*NOTIFICATIONS.length)];
+  const el = document.getElementById('notif');
+  el.style.background = n.bg;
+  document.getElementById('notifIcon').textContent = n.icon;
+  document.getElementById('notifTitle').textContent = n.title;
+  document.getElementById('notifBody').textContent = n.body;
+  el.classList.add('show');
+  playSound(n.sound);
+  setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ============ TASK GENERATION ============
+function generateMath() {
+  const ops = ['+','-','×'];
+  const op = ops[Math.floor(Math.random()*3)];
+  let a, b, answer;
+  if (op === '+') {
+    a = 10 + Math.floor(Math.random()*90);
+    b = 10 + Math.floor(Math.random()*90);
+    answer = a + b;
+  } else if (op === '-') {
+    a = 30 + Math.floor(Math.random()*70);
+    b = 10 + Math.floor(Math.random()*(a-10));
+    answer = a - b;
+  } else {
+    a = 2 + Math.floor(Math.random()*11);
+    b = 2 + Math.floor(Math.random()*11);
+    answer = a * b;
+  }
+  const optSet = new Set([answer]);
+  while (optSet.size < 4) {
+    const offset = (Math.floor(Math.random()*9)+1) * (Math.random()<0.5?-1:1);
+    const wrong = answer + offset;
+    if (wrong >= 0 && wrong !== answer) optSet.add(wrong);
+  }
+  const opts = shuffle([...optSet]);
+  return {
+    type: 'mcq', category: 'math',
+    q: `What is ${a} ${op} ${b}?`,
+    opts: opts.map(String),
+    correctIdx: opts.indexOf(answer)
+  };
+}
+
+function generateSort() {
+  const variants = [
+    () => {
+      const nums = [];
+      while (nums.length < 3) {
+        const n = Math.floor(Math.random()*99)+1;
+        if (!nums.includes(n)) nums.push(n);
+      }
+      return {
+        type: 'sort', category: 'sort',
+        q: "Drag to sort from SMALLEST to LARGEST",
+        items: nums.map(String),
+        correctOrder: nums.slice().sort((x,y)=>x-y).map(String)
+      };
+    },
+    () => {
+      const nums = [];
+      while (nums.length < 3) {
+        const n = Math.floor(Math.random()*99)+1;
+        if (!nums.includes(n)) nums.push(n);
+      }
+      return {
+        type: 'sort', category: 'sort',
+        q: "Drag to sort from LARGEST to SMALLEST",
+        items: nums.map(String),
+        correctOrder: nums.slice().sort((x,y)=>y-x).map(String)
+      };
+    },
+    () => {
+      const pool = ["Apple","Banana","Cherry","Date","Fig","Grape","Kiwi","Lemon","Mango","Orange","Peach","Plum","Pear","Lime","Melon"];
+      const picked = [];
+      while (picked.length < 3) {
+        const p = pool[Math.floor(Math.random()*pool.length)];
+        if (!picked.includes(p)) picked.push(p);
+      }
+      return {
+        type: 'sort', category: 'sort',
+        q: "Drag to sort ALPHABETICALLY (A → Z)",
+        items: picked,
+        correctOrder: picked.slice().sort()
+      };
+    },
+    () => {
+      const pool = [
+        ["Grape",5],["Strawberry",12],["Lemon",50],["Apple",150],["Banana",120],
+        ["Orange",130],["Pineapple",1000],["Coconut",1400],["Watermelon",9000]
+      ];
+      const picked = [];
+      while (picked.length < 3) {
+        const p = pool[Math.floor(Math.random()*pool.length)];
+        if (!picked.find(x => x[0] === p[0])) picked.push(p);
+      }
+      return {
+        type: 'sort', category: 'sort',
+        q: "Drag to sort from LIGHTEST to HEAVIEST fruit",
+        items: picked.map(p => p[0]),
+        correctOrder: picked.slice().sort((a,b)=>a[1]-b[1]).map(p=>p[0])
+      };
+    }
+  ];
+  return variants[Math.floor(Math.random()*variants.length)]();
+}
+
+function getPuzzle() {
+  if (state.puzzlePool.length === 0) state.puzzlePool = shuffle(PUZZLES);
+  const p = state.puzzlePool.pop();
+  return { ...p, type:'mcq', category:'puzzle' };
+}
+
+function getGK() {
+  if (state.gkPool.length === 0) state.gkPool = shuffle(GK);
+  const g = state.gkPool.pop();
+  return { ...g, type:'mcq', category:'gk' };
+}
+
+function nextTask() {
+  // Practice block (currentBlock === -1): random ad-hoc generation
+  if (state.currentBlock === -1) {
+    const types = ['math','puzzle','gk'];
+    const t = types[Math.floor(Math.random()*types.length)];
+    if (t === 'math') return generateMath();
+    if (t === 'puzzle') return getPuzzle();
+    return getGK();
+  }
+  // Main blocks: use the pre-generated balanced sequence (8 math + 8 puzzle + 8 GK)
+  const seq = state.blockSequences[state.currentBlock];
+  if (state.taskIdx < seq.length) {
+    return seq[state.taskIdx++];
+  }
+  // Fallback if a participant somehow exceeds 24 tasks in 60s
+  return generateMath();
+}
+
+// ============ RENDER ============
+const app = document.getElementById('app');
+function render(html) { app.innerHTML = html; }
+
+function renderSetup() {
+  document.getElementById('timer').style.display = 'none';
+  const orderOptions = Object.keys(ORDERS).map(k => `<option value="${k}">${k}</option>`).join('');
+  const stored = JSON.parse(localStorage.getItem('experimentData') || '[]');
+  const storedCount = new Set(stored.map(r => r[0])).size;
+  render(`
+    <h1>Experiment Setup</h1>
+    <p class="muted">Experimenter screen — fill in before each participant.</p>
+    <div class="card">
+      <label>Participant Name</label>
+      <input type="text" id="pid" placeholder="e.g. Alice Smith">
+      <label>Counterbalance order (rotate through 1–6)</label>
+      <select id="order">${orderOptions}</select>
+      <p class="small">Latin square: rotate orders so each condition appears equally in each position. 6 participants = full balance.</p>
+      <button onclick="startDemographics()">Continue → Participant Demographics</button>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0;">Collected data</h2>
+      <p class="small">${storedCount} participant${storedCount===1?'':'s'} saved so far in this browser. Data auto-saves after each session.</p>
+      <button class="secondary" onclick="downloadAllData()" ${storedCount===0?'disabled style="opacity:0.4;"':''}>Download all data as CSV (opens in Excel)</button>
+    </div>
+  `);
+}
+
+function startDemographics() {
+  const pid = document.getElementById('pid').value.trim();
+  const order = document.getElementById('order').value;
+  if (!pid) { alert('Enter participant name'); return; }
+  state.participantId = pid;
+  state.orderName = order;
+  state.order = ORDERS[order];
+  state.gkPool = shuffle(GK);
+  state.puzzlePool = shuffle(PUZZLES);
+  // Pre-generate 3 balanced blocks: each block = 8 math + 8 puzzle + 8 GK,
+  // shuffled. Guarantees same task-type composition across all 3 rounds
+  // so difficulty is comparable. Buffer ensures fast participants never run out.
+  state.blockSequences = [];
+  for (let b = 0; b < 3; b++) {
+    const tasks = [];
+    for (let i = 0; i < 8; i++) tasks.push(generateMath());
+    for (let i = 0; i < 8; i++) tasks.push(getPuzzle());
+    for (let i = 0; i < 8; i++) tasks.push(getGK());
+    state.blockSequences.push(shuffle(tasks));
+  }
+  state.taskIdx = 0;
+  renderDemographics();
+}
+
+function renderDemographics() {
+  render(`
+    <h1>Welcome</h1>
+    <p>Thank you for taking part. This study takes about 5 minutes.</p>
+    <div class="card">
+      <label>Age</label>
+      <input type="number" id="age" min="16" max="99">
+      <label>Gender</label>
+      <select id="gender">
+        <option value="">-- select --</option>
+        <option value="female">Female</option>
+        <option value="male">Male</option>
+        <option value="non-binary">Non-binary</option>
+        <option value="prefer not to say">Prefer not to say</option>
+      </select>
+      <button onclick="saveDemographics()">Continue</button>
+    </div>
+  `);
+}
+
+function saveDemographics() {
+  const age = document.getElementById('age').value;
+  const gender = document.getElementById('gender').value;
+  if (!age || !gender) { alert('Please complete both fields'); return; }
+  state.age = age; state.gender = gender;
+  renderInstructions();
+}
+
+function renderInstructions() {
+  render(`
+    <h1>Instructions</h1>
+    <div class="card">
+      <p>You will work through a mix of <strong>three task types</strong> for three short rounds (1 minute each):</p>
+      <ul>
+        <li><strong>Math</strong> — quick arithmetic, pick the correct answer.</li>
+        <li><strong>Puzzle</strong> — number sequences, patterns, simple logic.</li>
+        <li><strong>Knowledge</strong> — general knowledge multiple choice.</li>
+      </ul>
+      <p>Click an option or press <strong>1, 2, 3, or 4</strong> on the keyboard. The next task appears immediately.</p>
+      <p>Work as quickly and accurately as you can. Don't worry about finishing — just keep going.</p>
+      <p>During some rounds, <strong>phone notifications will pop up at the top of the screen with sounds</strong>. You don't need to respond to them — just keep working.</p>
+      <p>After each round, you'll rate how distracted you felt.</p>
+      <button onclick="startPractice()">Start practice round</button>
+    </div>
+  `);
+}
+
+function startPractice() {
+  ensureAudio(); // unlock audio inside user gesture (needed for iOS)
+  state.currentBlock = -1;
+  state.answers = [];
+  state.BLOCK_DURATION = 30;
+  startBlockTask(0, 'Practice round (30 seconds, no notifications)');
+}
+
+function startMainBlock() {
+  state.BLOCK_DURATION = 60;
+  state.taskIdx = 0; // reset pre-generated sequence pointer for this block
+  const freq = state.order[state.currentBlock];
+  startBlockTask(freq, `Round ${state.currentBlock+1} of 3 — 1 minute`);
+}
+
+function startBlockTask(freq, label) {
+  state.blockStart = Date.now();
+  state.answers = [];
+  state.currentTask = nextTask();
+
+  render(`
+    <p class="muted" style="text-align:center;">${label}</p>
+    <div id="taskArea"></div>
+    <p class="progress" id="progress">0 answered</p>
+  `);
+  renderCurrentTask();
+
+  state.acceptingAnswer = true;
+  document.addEventListener('keydown', keyHandler);
+
+  document.getElementById('timer').style.display = 'block';
+  updateTimer();
+  state.blockTimer = setInterval(() => {
+    const remaining = state.BLOCK_DURATION - Math.floor((Date.now()-state.blockStart)/1000);
+    if (remaining <= 0) endBlock();
+    else updateTimer();
+  }, 250);
+
+  if (freq > 0) {
+    const interval = 60000 / freq;
+    setTimeout(() => {
+      showNotif();
+      state.notifTimer = setInterval(showNotif, interval);
+    }, interval / 2);
+  }
+}
+
+function renderCurrentTask() {
+  const t = state.currentTask;
+  const area = document.getElementById('taskArea');
+  const label = ({math:'MATH', puzzle:'PUZZLE', sort:'SORT', gk:'KNOWLEDGE'})[t.category];
+
+  if (t.type === 'mcq') {
+    area.innerHTML = `
+      <div class="task-label">${label}</div>
+      <div class="question-text">${escapeHtml(t.q)}</div>
+      <div class="options">
+        ${t.opts.map((o,i) => `<button class="option-btn" onclick="submitMCQ(${i})"><span class="key">${i+1}</span>${escapeHtml(o)}</button>`).join('')}
+      </div>
+    `;
+  } else if (t.type === 'sort') {
+    state.currentSortOrder = t.items.slice();
+    area.innerHTML = `
+      <div class="task-label">${label}</div>
+      <div class="question-text">${escapeHtml(t.q)}</div>
+      <div class="sort-container" id="sortContainer"></div>
+      <div class="sort-submit-wrap"><button onclick="submitSort()">Submit (or press Enter)</button></div>
+    `;
+    renderSortItems();
+  }
+}
+
+function renderSortItems() {
+  document.getElementById('sortContainer').innerHTML =
+    state.currentSortOrder.map((item, i) =>
+      `<div class="sort-item" draggable="true" data-pos="${i}">${escapeHtml(item)}</div>`
+    ).join('');
+  attachSortHandlers();
+}
+
+let dragSrcIdx = null;
+function attachSortHandlers() {
+  document.querySelectorAll('.sort-item').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragSrcIdx = parseInt(el.dataset.pos);
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(dragSrcIdx));
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    el.addEventListener('dragover', e => {
+      e.preventDefault();
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      const targetIdx = parseInt(el.dataset.pos);
+      if (dragSrcIdx !== null && dragSrcIdx !== targetIdx) {
+        const arr = state.currentSortOrder;
+        const item = arr.splice(dragSrcIdx, 1)[0];
+        arr.splice(targetIdx, 0, item);
+        renderSortItems();
+      }
+      dragSrcIdx = null;
+    });
+  });
+}
+
+function submitMCQ(chosenIdx) {
+  if (!state.acceptingAnswer) return;
+  if (state.currentTask.type !== 'mcq') return;
+  const correct = chosenIdx === state.currentTask.correctIdx;
+  recordAnswer(correct);
+  advanceTask();
+}
+
+function submitSort() {
+  if (!state.acceptingAnswer) return;
+  if (state.currentTask.type !== 'sort') return;
+  const correctOrder = state.currentTask.correctOrder;
+  const correct = state.currentSortOrder.length === correctOrder.length &&
+    state.currentSortOrder.every((v,i) => v === correctOrder[i]);
+  recordAnswer(correct);
+  advanceTask();
+}
+
+function recordAnswer(correct) {
+  state.answers.push({
+    category: state.currentTask.category,
+    correct,
+    rt: Date.now() - state.blockStart,
+  });
+}
+
+function advanceTask() {
+  state.currentTask = nextTask();
+  renderCurrentTask();
+  document.getElementById('progress').textContent =
+    `${state.answers.length} answered`;
+}
+
+function keyHandler(e) {
+  if (!state.acceptingAnswer) return;
+  if (state.currentTask?.type === 'mcq' && ['1','2','3','4'].includes(e.key)) {
+    submitMCQ(parseInt(e.key) - 1);
+  } else if (state.currentTask?.type === 'sort' && e.key === 'Enter') {
+    submitSort();
+  }
+}
+
+function updateTimer() {
+  const remaining = Math.max(0, state.BLOCK_DURATION - Math.floor((Date.now()-state.blockStart)/1000));
+  const m = Math.floor(remaining/60).toString().padStart(2,'0');
+  const s = (remaining%60).toString().padStart(2,'0');
+  document.getElementById('timer').textContent = `${m}:${s}`;
+}
+
+function endBlock() {
+  state.acceptingAnswer = false;
+  document.removeEventListener('keydown', keyHandler);
+  clearInterval(state.blockTimer);
+  clearInterval(state.notifTimer);
+  document.getElementById('timer').style.display = 'none';
+
+  const total = state.answers.length;
+  const correct = state.answers.filter(a => a.correct).length;
+  const wrong = total - correct;
+
+  if (state.currentBlock === -1) {
+    state.currentBlock = 0;
+    render(`
+      <h1>Practice complete</h1>
+      <div class="card">
+        <p>You answered ${total} tasks (${correct} correct).</p>
+        <p>Now the real experiment begins. There are 3 rounds, each 1 minute long.</p>
+        <button onclick="startMainBlock()">Begin Round 1</button>
+      </div>
+    `);
+    return;
+  }
+
+  const freq = state.order[state.currentBlock];
+  state.blockData.push({
+    blockNum: state.currentBlock + 1, notifFreq: freq,
+    totalAnswers: total, correctAnswers: correct, wrongAnswers: wrong,
+    errorRate: total > 0 ? (wrong/total).toFixed(4) : 0,
+    completionRate: total > 0 ? (correct/total).toFixed(4) : 0,
+    distractionRating: null,
+  });
+  renderRating();
+}
+
+function renderRating() {
+  render(`
+    <h1>How distracted did you feel?</h1>
+    <p class="muted" style="text-align:center;">Round ${state.currentBlock+1} of 3</p>
+    <div class="card">
+      <div class="likert">
+        ${[1,2,3,4,5].map(n => `<button class="likert-btn" onclick="selectRating(${n})">${n}</button>`).join('')}
+      </div>
+      <div class="likert-labels">
+        <span>1 — Not at all</span>
+        <span>5 — Extremely</span>
+      </div>
+      <button id="ratingNext" onclick="advanceBlock()" disabled style="opacity:0.4;">Continue</button>
+    </div>
+  `);
+}
+
+function selectRating(n) {
+  state.blockData[state.blockData.length-1].distractionRating = n;
+  document.querySelectorAll('.likert-btn').forEach((b,i) => {
+    b.classList.toggle('selected', i+1 === n);
+  });
+  const btn = document.getElementById('ratingNext');
+  btn.disabled = false; btn.style.opacity = 1;
+}
+
+function advanceBlock() {
+  state.currentBlock++;
+  if (state.currentBlock >= 3) renderEnd();
+  else {
+    render(`
+      <h1>Short break</h1>
+      <div class="card">
+        <p>Take a moment if you need to. When ready, continue to round ${state.currentBlock+1}.</p>
+        <button onclick="startMainBlock()">Begin Round ${state.currentBlock+1}</button>
+      </div>
+    `);
+  }
+}
+
+function renderEnd() {
+  const b = state.blockData;
+  const longHeader = ['Name','Age','Gender','NotificationFrequency','TotalAnswers','CorrectAnswers','WrongAnswers','ErrorRate','CompletionRate','SubjectiveDistraction'];
+  const longRows = b.map(x => [state.participantId, state.age, state.gender, x.notifFreq, x.totalAnswers, x.correctAnswers, x.wrongAnswers, x.errorRate, x.completionRate, x.distractionRating]);
+
+  const wideHeader = [
+    'Name','Age','Gender','OrderName',
+    'Block1_freq','Block1_total','Block1_correct','Block1_wrong','Block1_errorRate','Block1_completionRate','Block1_distraction',
+    'Block2_freq','Block2_total','Block2_correct','Block2_wrong','Block2_errorRate','Block2_completionRate','Block2_distraction',
+    'Block3_freq','Block3_total','Block3_correct','Block3_wrong','Block3_errorRate','Block3_completionRate','Block3_distraction',
+  ];
+  const wideRow = [
+    state.participantId, state.age, state.gender, state.orderName,
+    ...b.flatMap(x => [x.notifFreq, x.totalAnswers, x.correctAnswers, x.wrongAnswers, x.errorRate, x.completionRate, x.distractionRating])
+  ];
+
+  // Build CSV with semicolon separator (German Excel default) + decimal commas
+  const wideCsv = wideHeader.map(csvCell).join(';') + '\n' + wideRow.map(csvCell).join(';');
+  const longCsv = longHeader.map(csvCell).join(';') + '\n' + longRows.map(r => r.map(csvCell).join(';')).join('\n');
+
+  // === AUTO-SAVE to localStorage (accumulates across all participants in this browser) ===
+  const existing = JSON.parse(localStorage.getItem('experimentData') || '[]');
+  existing.push(...longRows);
+  localStorage.setItem('experimentData', JSON.stringify(existing));
+  const storedCount = new Set(existing.map(r => r[0])).size;
+
+  render(`
+    <h1>Thank you</h1>
+    <p>The study is complete. Please let the researcher know.</p>
+
+    <div class="card">
+      <h2 style="margin-top:0;">✓ Data saved automatically</h2>
+      <p class="small">This participant's data has been added to the master file. ${storedCount} participant${storedCount===1?'':'s'} saved in this browser.</p>
+      <button onclick="downloadAllData()">Download all data as CSV (opens in Excel)</button>
+    </div>
+
+    <h2>Summary for this participant</h2>
+    <table>
+      <tr><th>Block</th><th>Freq/min</th><th>Total</th><th>Correct</th><th>Wrong</th><th>Error rate</th><th>Distraction</th></tr>
+      ${b.map(x => `<tr><td>${x.blockNum}</td><td>${x.notifFreq}</td><td>${x.totalAnswers}</td><td>${x.correctAnswers}</td><td>${x.wrongAnswers}</td><td>${x.errorRate}</td><td>${x.distractionRating}</td></tr>`).join('')}
+    </table>
+
+    <h2>This participant's data (backup, in case you want to copy manually)</h2>
+    <p class="small">Long format (3 rows for JASP correlation analysis):</p>
+    <textarea readonly onclick="this.select()">${longCsv}</textarea>
+    <button onclick="copyText(this.previousElementSibling)">Copy long format</button>
+
+    <p class="small" style="margin-top:24px;">Wide format (1 row):</p>
+    <textarea readonly onclick="this.select()">${wideCsv}</textarea>
+    <button onclick="copyText(this.previousElementSibling)">Copy wide format</button>
+
+    <button class="secondary" onclick="location.reload()" style="margin-top:24px;">Reset for next participant</button>
+  `);
+}
+
+function csvCell(val) {
+  let s = String(val);
+  // Convert decimal point to comma so German Excel recognizes numbers (e.g. "0.4286" -> "0,4286")
+  if (/^-?\d+\.\d+$/.test(s)) s = s.replace('.', ',');
+  // Quote if contains the separator, quote char, or newline
+  if (s.includes(';') || s.includes('"') || s.includes('\n')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function downloadAllData() {
+  const stored = JSON.parse(localStorage.getItem('experimentData') || '[]');
+  if (stored.length === 0) { alert('No data saved yet'); return; }
+  const header = ['Name','Age','Gender','NotificationFrequency','TotalAnswers','CorrectAnswers','WrongAnswers','ErrorRate','CompletionRate','SubjectiveDistraction'];
+  // sep=; is an Excel directive that forces semicolon parsing on any locale.
+  // Body uses ; separator and converts decimals "0.42" -> "0,42" for German Excel.
+  const csv = 'sep=;\n' +
+    header.map(csvCell).join(';') + '\n' +
+    stored.map(r => r.map(csvCell).join(';')).join('\n');
+  // UTF-8 BOM helps Excel detect encoding correctly
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const today = new Date().toISOString().slice(0,10);
+  a.download = `experiment_data_${today}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function clearAllData() {
+  if (!confirm('Delete ALL saved participant data? This cannot be undone. Download first if you want a backup.')) return;
+  localStorage.removeItem('experimentData');
+  alert('All data cleared.');
+  location.reload();
+}
+
+function copyText(ta) {
+  ta.select();
+  document.execCommand('copy');
+  alert('Copied to clipboard');
+}
+
+renderSetup();
+</script>
+</body>
+</html>
