@@ -176,6 +176,7 @@
 // Each participant's data is auto-POSTed to this Google Apps Script URL on completion.
 // To change the destination, deploy a new Apps Script web app and paste its URL here.
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyPyXhx4kIMMSULd-6aHIeMK-IVEh6eP5_TBebCDsaJW3Dp4Tm_WdCXbnc00Cxt_VaL/exec';
+
 // ============ GENERAL KNOWLEDGE BANK ============
 const GK = [
   { q:"What is the capital of France?", opts:["Paris","Lyon","Marseille","Nice"], correctIdx:0 },
@@ -603,8 +604,6 @@ function render(html) { app.innerHTML = html; }
 function renderSetup() {
   document.getElementById('timer').style.display = 'none';
   const orderOptions = Object.keys(ORDERS).map(k => `<option value="${k}">${k}</option>`).join('');
-  const stored = JSON.parse(localStorage.getItem('experimentData') || '[]');
-  const storedCount = new Set(stored.map(r => r[0])).size;
   render(`
     <h1>Experiment Setup</h1>
     <p class="muted">Experimenter screen — fill in before each participant.</p>
@@ -615,11 +614,6 @@ function renderSetup() {
       <select id="order">${orderOptions}</select>
       <p class="small">Latin square: rotate orders so each condition appears equally in each position. 6 participants = full balance.</p>
       <button onclick="startDemographics()">Continue → Participant Demographics</button>
-    </div>
-    <div class="card">
-      <h2 style="margin-top:0;">Collected data</h2>
-      <p class="small">${storedCount} participant${storedCount===1?'':'s'} saved so far in this browser. Data auto-saves after each session.</p>
-      <button class="secondary" onclick="downloadAllData()" ${storedCount===0?'disabled style="opacity:0.4;"':''}>Download all data as CSV (opens in Excel)</button>
     </div>
   `);
 }
@@ -931,38 +925,37 @@ function advanceBlock() {
 
 function renderEnd() {
   const b = state.blockData;
-  const longHeader = ['Name','Age','Gender','NotificationFrequency','TotalAnswers','CorrectAnswers','WrongAnswers','ErrorRate','CompletionRate','SubjectiveDistraction'];
   const longRows = b.map(x => [state.participantId, state.age, state.gender, x.notifFreq, x.totalAnswers, x.correctAnswers, x.wrongAnswers, x.errorRate, x.completionRate, x.distractionRating]);
 
-  const wideHeader = [
-    'Name','Age','Gender','OrderName',
-    'Block1_freq','Block1_total','Block1_correct','Block1_wrong','Block1_errorRate','Block1_completionRate','Block1_distraction',
-    'Block2_freq','Block2_total','Block2_correct','Block2_wrong','Block2_errorRate','Block2_completionRate','Block2_distraction',
-    'Block3_freq','Block3_total','Block3_correct','Block3_wrong','Block3_errorRate','Block3_completionRate','Block3_distraction',
-  ];
-  const wideRow = [
-    state.participantId, state.age, state.gender, state.orderName,
-    ...b.flatMap(x => [x.notifFreq, x.totalAnswers, x.correctAnswers, x.wrongAnswers, x.errorRate, x.completionRate, x.distractionRating])
-  ];
-
-  // Build CSV with semicolon separator (German Excel default) + decimal commas
-  const wideCsv = wideHeader.map(csvCell).join(';') + '\n' + wideRow.map(csvCell).join(';');
-  const longCsv = longHeader.map(csvCell).join(';') + '\n' + longRows.map(r => r.map(csvCell).join(';')).join('\n');
-
-  // === AUTO-SAVE to localStorage (accumulates across all participants in this browser) ===
+  // Silent backup to localStorage (in case the Google Sheet sync fails)
   const existing = JSON.parse(localStorage.getItem('experimentData') || '[]');
   existing.push(...longRows);
   localStorage.setItem('experimentData', JSON.stringify(existing));
-  const storedCount = new Set(existing.map(r => r[0])).size;
+
+  // Sync to Google Sheet
+  syncToSheets(longRows).then(result => {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    if (result.ok) {
+      el.innerHTML = '<p style="color:#2a7f3a;font-size:16px;margin:0;">✓ Your responses have been saved to the researcher\'s Google Sheet.</p>';
+    } else {
+      console.error('Sheet sync failed:', result.error);
+      el.innerHTML = `
+        <p style="color:#a04040;font-size:16px;margin:0 0 8px;">⚠ Could not reach the researcher's Google Sheet.</p>
+        <p class="small" style="margin:0 0 12px;">Your data is saved locally on this device. If you are the researcher, click below to recover it.</p>
+        <button onclick="downloadAllData()">Download backup CSV</button>
+      `;
+    }
+  });
 
   render(`
     <h1>Thank you</h1>
     <p>The study is complete. Please let the researcher know.</p>
 
     <div class="card">
-      <h2 style="margin-top:0;">✓ Data saved automatically</h2>
-      <p class="small">This participant's data has been added to the master file. ${storedCount} participant${storedCount===1?'':'s'} saved in this browser.</p>
-      <button onclick="downloadAllData()">Download all data as CSV (opens in Excel)</button>
+      <div id="syncStatus">
+        <p class="small" style="margin:0;">Saving to Google Sheet…</p>
+      </div>
     </div>
 
     <h2>Summary for this participant</h2>
@@ -970,15 +963,6 @@ function renderEnd() {
       <tr><th>Block</th><th>Freq/min</th><th>Total</th><th>Correct</th><th>Wrong</th><th>Error rate</th><th>Distraction</th></tr>
       ${b.map(x => `<tr><td>${x.blockNum}</td><td>${x.notifFreq}</td><td>${x.totalAnswers}</td><td>${x.correctAnswers}</td><td>${x.wrongAnswers}</td><td>${x.errorRate}</td><td>${x.distractionRating}</td></tr>`).join('')}
     </table>
-
-    <h2>This participant's data (backup, in case you want to copy manually)</h2>
-    <p class="small">Long format (3 rows for JASP correlation analysis):</p>
-    <textarea readonly onclick="this.select()">${longCsv}</textarea>
-    <button onclick="copyText(this.previousElementSibling)">Copy long format</button>
-
-    <p class="small" style="margin-top:24px;">Wide format (1 row):</p>
-    <textarea readonly onclick="this.select()">${wideCsv}</textarea>
-    <button onclick="copyText(this.previousElementSibling)">Copy wide format</button>
 
     <button class="secondary" onclick="location.reload()" style="margin-top:24px;">Reset for next participant</button>
   `);
@@ -993,6 +977,55 @@ function csvCell(val) {
     return '"' + s.replace(/"/g, '""') + '"';
   }
   return s;
+}
+
+function syncToSheets(rows) {
+  // Hidden iframe + form submission. The most reliable cross-origin POST to
+  // Apps Script web apps. Why this works where fetch() didn't:
+  //  - CORS doesn't apply to form submissions; no preflight, no opaque response weirdness
+  //  - Apps Script's internal redirect always preserves POST for real form submits
+  //  - The iframe.onload event tells us the response came back
+  // Apps Script reads the payload via e.parameter.payload
+  if (!SHEETS_URL) return Promise.resolve({ ok: false, skipped: true });
+  return new Promise((resolve) => {
+    const frameName = 'syncFrame_' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = frameName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SHEETS_URL;
+    form.target = frameName;
+    form.enctype = 'application/x-www-form-urlencoded';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify({ rows });
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    let resolved = false;
+    const finish = (result) => {
+      if (resolved) return;
+      resolved = true;
+      try { document.body.removeChild(form); } catch (e) {}
+      try { document.body.removeChild(iframe); } catch (e) {}
+      resolve(result);
+    };
+
+    iframe.onload = () => finish({ ok: true });
+    iframe.onerror = () => finish({ ok: false, error: 'iframe error' });
+    setTimeout(() => finish({ ok: false, error: 'timeout after 15s' }), 15000);
+
+    try {
+      form.submit();
+    } catch (err) {
+      finish({ ok: false, error: err.message });
+    }
+  });
 }
 
 function downloadAllData() {
