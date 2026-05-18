@@ -135,7 +135,7 @@
     .options { grid-template-columns: 1fr; gap: 10px; max-width: none; }
     .option-btn { padding: 16px 14px; font-size: 15px; width: 100%; margin-top: 0; }
     .option-btn .key { width: 24px; height: 24px; line-height: 24px; font-size: 13px; margin-right: 10px; }
-    /* Notification banner — mobile-friendly */
+    /* Notification banner - mobile-friendly */
     .notif {
       min-width: 0;
       max-width: none;
@@ -344,22 +344,22 @@ const PUZZLES = [
 const NOTIFICATIONS = [
   { bg:"#25D366", icon:"💬", title:"Sarah",            body:"omg you won't BELIEVE what just happened 👀", sound:"message" },
   { bg:"#E1306C", icon:"📷", title:"Instagram",        body:"@yourcrush started following you 💕",         sound:"social" },
-  { bg:"#000000", icon:"🎵", title:"TikTok",           body:"Someone tagged you in a video — 200k views",  sound:"social" },
+  { bg:"#000000", icon:"🎵", title:"TikTok",           body:"Someone tagged you in a video - 200k views",  sound:"social" },
   { bg:"#000000", icon:"👻", title:"Snapchat",         body:"🔥 Streak with Alex expires in 1 hour",       sound:"social" },
-  { bg:"#000000", icon:"𝕏",  title:"X (Twitter)",      body:"Your post is going viral — 12k likes 🚀",     sound:"social" },
+  { bg:"#000000", icon:"𝕏",  title:"X (Twitter)",      body:"Your post is going viral - 12k likes 🚀",     sound:"social" },
   { bg:"#E50914", icon:"▶️", title:"Netflix",          body:"New season just dropped. Watch now.",          sound:"jingle" },
   { bg:"#1DB954", icon:"🎧", title:"Spotify",          body:"Your weekly mix is ready 🎵",                  sound:"positive" },
-  { bg:"#06C167", icon:"🍕", title:"Uber Eats",        body:"50% OFF your favorite spot — 10 min only!",    sound:"jingle" },
+  { bg:"#06C167", icon:"🍕", title:"Uber Eats",        body:"50% OFF your favorite spot - 10 min only!",    sound:"jingle" },
   { bg:"#FD5068", icon:"🔥", title:"Tinder",           body:"You got a SUPER LIKE ⭐",                       sound:"positive" },
   { bg:"#003366", icon:"🏦", title:"Bank Alert",       body:"⚠️ Suspicious activity on your account",        sound:"alert" },
-  { bg:"#FF9900", icon:"📦", title:"Amazon",           body:"Lightning deal: 70% off — ends in 5 min!",     sound:"positive" },
+  { bg:"#FF9900", icon:"📦", title:"Amazon",           body:"Lightning deal: 70% off - ends in 5 min!",     sound:"positive" },
   { bg:"#5865F2", icon:"🎮", title:"Discord",          body:"@everyone PARTY TONIGHT 🎉🎉",                  sound:"jingle" },
-  { bg:"#EA4335", icon:"✉️", title:"Gmail",            body:"URGENT — action required today",               sound:"bell" },
-  { bg:"#4285F4", icon:"📅", title:"Calendar",         body:"Meeting in 5 minutes — are you ready??",       sound:"bell" },
+  { bg:"#EA4335", icon:"✉️", title:"Gmail",            body:"URGENT - action required today",               sound:"bell" },
+  { bg:"#4285F4", icon:"📅", title:"Calendar",         body:"Meeting in 5 minutes - are you ready??",       sound:"bell" },
   { bg:"#FF4500", icon:"👽", title:"Reddit",           body:"r/funny: you won't believe this (45k upvotes)", sound:"social" },
   { bg:"#FF0000", icon:"▶️", title:"YouTube",          body:"New upload: 'I gave away $1,000,000'",         sound:"positive" },
   { bg:"#9146FF", icon:"🎮", title:"Twitch",           body:"Your favorite streamer is LIVE 🔴",             sound:"positive" },
-  { bg:"#000000", icon:"📸", title:"BeReal",           body:"⚠️ Time to BeReal — 2 min late.",               sound:"alert" },
+  { bg:"#000000", icon:"📸", title:"BeReal",           body:"⚠️ Time to BeReal - 2 min late.",               sound:"alert" },
   { bg:"#1877F2", icon:"👍", title:"Facebook",         body:"🎂 It's Tom's birthday today!",                 sound:"jingle" },
   { bg:"#0A66C2", icon:"💼", title:"LinkedIn",         body:"Your profile appeared in 12 searches",         sound:"bell" },
   { bg:"#CC0000", icon:"📰", title:"BREAKING NEWS",    body:"🚨 Major story developing right now",          sound:"alert" },
@@ -372,8 +372,8 @@ const NOTIFICATIONS = [
   { bg:"#007AFF", icon:"📡", title:"AirDrop",          body:"'iPhone (5)' wants to share a photo",          sound:"bell" },
   { bg:"#E60023", icon:"📌", title:"Pinterest",        body:"You have 7 new pins ❤️",                       sound:"social" },
   { bg:"#34C759", icon:"💬", title:"Mom",              body:"Call me when you get a chance ❤️",             sound:"message" },
-  { bg:"#4A154B", icon:"💬", title:"Slack — #general", body:"@channel: anyone around for a quick question?", sound:"message" },
-  { bg:"#34C759", icon:"📍", title:"Find My",          body:"AirPods detected — Living Room",               sound:"bell" },
+  { bg:"#4A154B", icon:"💬", title:"Slack - #general", body:"@channel: anyone around for a quick question?", sound:"message" },
+  { bg:"#34C759", icon:"📍", title:"Find My",          body:"AirPods detected - Living Room",               sound:"bell" },
 ];
 
 // ============ STATE ============
@@ -412,7 +412,7 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// ============ AUDIO — DISTINCT SOUNDS PER APP ============
+// ============ AUDIO - DISTINCT SOUNDS PER APP ============
 let audioCtx;
 function ensureAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -687,13 +687,13 @@ function renderInstructions() {
     <div class="card">
       <p>You will work through a mix of <strong>three task types</strong> for three short rounds (1 minute each):</p>
       <ul>
-        <li><strong>Math</strong> — quick arithmetic, pick the correct answer.</li>
-        <li><strong>Puzzle</strong> — number sequences, patterns, simple logic.</li>
-        <li><strong>Knowledge</strong> — general knowledge multiple choice.</li>
+        <li><strong>Math</strong> - quick arithmetic, pick the correct answer.</li>
+        <li><strong>Puzzle</strong> - number sequences, patterns, simple logic.</li>
+        <li><strong>Knowledge</strong> - general knowledge multiple choice.</li>
       </ul>
       <p>Click an option or press <strong>1, 2, 3, or 4</strong> on the keyboard. The next task appears immediately.</p>
-      <p>Work as quickly and accurately as you can. Don't worry about finishing — just keep going.</p>
-      <p>During some rounds, <strong>phone notifications will pop up at the top of the screen with sounds</strong>. You don't need to respond to them — just keep working.</p>
+      <p>Work as quickly and accurately as you can. Don't worry about finishing - just keep going.</p>
+      <p>During some rounds, <strong>phone notifications will pop up at the top of the screen with sounds</strong>. You don't need to respond to them - just keep working.</p>
       <p>After each round, you'll rate how distracted you felt.</p>
       <button onclick="startPractice()">Start practice round</button>
     </div>
@@ -705,14 +705,14 @@ function startPractice() {
   state.currentBlock = -1;
   state.answers = [];
   state.BLOCK_DURATION = 30;
-  startBlockTask(0, 'Practice round (30 seconds, no notifications)');
+  startBlockTask(0, 'Practice round (30 seconds)');
 }
 
 function startMainBlock() {
   state.BLOCK_DURATION = 60;
   state.taskIdx = 0; // reset pre-generated sequence pointer for this block
   const freq = state.order[state.currentBlock];
-  startBlockTask(freq, `Round ${state.currentBlock+1} of 3 — 1 minute`);
+  startBlockTask(freq, `Round ${state.currentBlock+1} of 3 - 1 minute`);
 }
 
 function startBlockTask(freq, label) {
@@ -904,8 +904,8 @@ function renderRating() {
         ${[1,2,3,4,5].map(n => `<button class="likert-btn" onclick="selectRating(${n})">${n}</button>`).join('')}
       </div>
       <div class="likert-labels">
-        <span>1 — Not at all</span>
-        <span>5 — Extremely</span>
+        <span>1 - Not at all</span>
+        <span>5 - Extremely</span>
       </div>
       <button id="ratingNext" onclick="advanceBlock()" disabled style="opacity:0.4;">Continue</button>
     </div>
@@ -937,74 +937,31 @@ function advanceBlock() {
 
 function renderEnd() {
   const b = state.blockData;
-  const longHeader = ['Timestamp','Name','Age','Gender','NotificationFrequency','TotalAnswers','CorrectAnswers','WrongAnswers','ErrorRate','CompletionRate','SubjectiveDistraction'];
+
+  // Build the row data for storage (silent - not shown to participant)
   const longRows = b.map(x => [x.timestamp, state.participantId, state.age, state.gender, x.notifFreq, x.totalAnswers, x.correctAnswers, x.wrongAnswers, x.errorRate, x.completionRate, x.distractionRating]);
 
-  const wideHeader = [
-    'Name','Age','Gender','OrderName',
-    'Block1_timestamp','Block1_freq','Block1_total','Block1_correct','Block1_wrong','Block1_errorRate','Block1_completionRate','Block1_distraction',
-    'Block2_timestamp','Block2_freq','Block2_total','Block2_correct','Block2_wrong','Block2_errorRate','Block2_completionRate','Block2_distraction',
-    'Block3_timestamp','Block3_freq','Block3_total','Block3_correct','Block3_wrong','Block3_errorRate','Block3_completionRate','Block3_distraction',
-  ];
-  const wideRow = [
-    state.participantId, state.age, state.gender, state.orderName,
-    ...b.flatMap(x => [x.timestamp, x.notifFreq, x.totalAnswers, x.correctAnswers, x.wrongAnswers, x.errorRate, x.completionRate, x.distractionRating])
-  ];
-
-  // Build CSV with semicolon separator (German Excel default) + decimal commas
-  const wideCsv = wideHeader.map(csvCell).join(';') + '\n' + wideRow.map(csvCell).join(';');
-  const longCsv = longHeader.map(csvCell).join(';') + '\n' + longRows.map(r => r.map(csvCell).join(';')).join('\n');
-
-  // === AUTO-SAVE to localStorage (accumulates across all participants in this browser) ===
+  // Auto-save to localStorage (accumulates across all participants in this browser)
   const existing = JSON.parse(localStorage.getItem('experimentData') || '[]');
   existing.push(...longRows);
   localStorage.setItem('experimentData', JSON.stringify(existing));
-  const storedCount = new Set(existing.map(r => r[0])).size;
 
-  // === SYNC to Google Sheet (in the background) ===
-  syncToSheets(longRows).then(result => {
-    const el = document.getElementById('syncStatus');
-    if (!el) return;
-    if (result.ok) {
-      el.textContent = '✓ Synced to Google Sheet';
-      el.style.color = '#2a7f3a';
-    } else if (result.skipped) {
-      el.textContent = 'ⓘ Google Sheet sync not configured';
-      el.style.color = '#888';
-    } else {
-      el.textContent = '⚠ Could not reach Google Sheet — data saved locally as backup';
-      el.style.color = '#a04040';
-    }
-  });
+  // Sync to Google Sheet silently in the background (no UI feedback)
+  syncToSheets(longRows);
+
+  // Hide the timer in the corner just in case
+  const timerEl = document.getElementById('timer');
+  if (timerEl) timerEl.style.display = 'none';
 
   render(`
     <h1>Thank you</h1>
     <p>The study is complete. Please let the researcher know.</p>
 
-    <div class="card">
-      <h2 style="margin-top:0;">✓ Data saved automatically</h2>
-      <p class="small">This participant's data has been added to the master file. ${storedCount} participant${storedCount===1?'':'s'} saved in this browser.</p>
-      <p class="small" id="syncStatus" style="margin-top:8px;">Syncing to Google Sheet…</p>
-      <button onclick="downloadAllDataAsExcel()" style="background:#1a6b2a;">⬇ Download all participants as Excel (.xlsx)</button>
-      <button onclick="downloadAllData()" class="secondary" style="margin-top:10px;">Download all participants as CSV</button>
-    </div>
-
-    <h2>Summary for this participant</h2>
+    <h2>Your scores</h2>
     <table>
-      <tr><th>Block</th><th>Freq/min</th><th>Total</th><th>Correct</th><th>Wrong</th><th>Error rate</th><th>Completion rate</th><th>Distraction</th></tr>
-      ${b.map(x => `<tr><td>${x.blockNum}</td><td>${x.notifFreq}</td><td>${x.totalAnswers}</td><td>${x.correctAnswers}</td><td>${x.wrongAnswers}</td><td>${x.errorRate}</td><td>${x.completionRate}</td><td>${x.distractionRating}</td></tr>`).join('')}
+      <tr><th>Round</th><th>Correct</th><th>Total</th></tr>
+      ${b.map(x => `<tr><td>${x.blockNum}</td><td>${x.correctAnswers}</td><td>${x.totalAnswers}</td></tr>`).join('')}
     </table>
-
-    <h2>This participant's data (backup)</h2>
-    <p class="small">Long format (3 rows — one per round):</p>
-    <textarea readonly onclick="this.select()">${longCsv}</textarea>
-    <button onclick="copyText(this.previousElementSibling)">Copy long format</button>
-
-    <p class="small" style="margin-top:24px;">Wide format (1 row):</p>
-    <textarea readonly onclick="this.select()">${wideCsv}</textarea>
-    <button onclick="copyText(this.previousElementSibling)">Copy wide format</button>
-
-    <button class="secondary" onclick="location.reload()" style="margin-top:24px;">Reset for next participant</button>
   `);
 }
 
