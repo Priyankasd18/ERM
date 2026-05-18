@@ -172,6 +172,10 @@
 <div id="app"></div>
 
 <script>
+// ============ GOOGLE SHEETS SYNC ============
+// Each participant's data is auto-POSTed to this Google Apps Script URL on completion.
+// To change the destination, deploy a new Apps Script web app and paste its URL here.
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyPyXhx4kIMMSULd-6aHIeMK-IVEh6eP5_TBebCDsaJW3Dp4Tm_WdCXbnc00Cxt_VaL/exec';
 // ============ GENERAL KNOWLEDGE BANK ============
 const GK = [
   { q:"What is the capital of France?", opts:["Paris","Lyon","Marseille","Nice"], correctIdx:0 },
